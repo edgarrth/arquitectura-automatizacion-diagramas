@@ -70,7 +70,9 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "Generate C4-PlantUML diagrams from Structurizr"
-          file_pattern: architecture/generated/c4-plantuml/*.puml docs/assets/diagrams/svg/*.svg
+          file_pattern: |
+            architecture/generated/c4-plantuml/*
+            docs/assets/diagrams/svg/**
 
   publish-docs:
     needs: generate-c4
