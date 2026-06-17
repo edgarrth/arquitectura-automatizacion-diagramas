@@ -76,6 +76,12 @@ jobs:
         run: |
           echo "SVG files:"
           find docs -type f -name "*.svg" -print
+            
+      - name: Commit generated diagrams
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Generate C4-PlantUML diagrams from Structurizr"
+          add_options: '-A'
           
       - name: Commit generated diagrams
         uses: stefanzweifel/git-auto-commit-action@v5
