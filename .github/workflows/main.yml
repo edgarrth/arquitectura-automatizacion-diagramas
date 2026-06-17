@@ -27,8 +27,9 @@ jobs:
 
       - name: Download Structurizr CLI
         run: |
+          rm -rf structurizr-cli structurizr-cli.zip
           curl -L -o structurizr-cli.zip https://github.com/structurizr/cli/releases/latest/download/structurizr-cli.zip
-          unzip structurizr-cli.zip -d structurizr-cli
+          unzip -o structurizr-cli.zip -d structurizr-cli
           chmod +x structurizr-cli/structurizr.sh
 
       - name: Validate Structurizr DSL
