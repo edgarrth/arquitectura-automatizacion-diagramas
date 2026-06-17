@@ -1,0 +1,52 @@
+@startuml
+title <size:24>Component View: Payment Processing Platform - Payment Service</size>\n<size:24>Shows the internal components of the Payment Service.</size>
+
+set separator none
+left to right direction
+
+<style>
+  root {
+    BackgroundColor: #ffffff
+    FontColor: #444444
+  }
+</style>
+
+!include <C4/C4>
+!include <C4/C4_Context>
+!include <C4/C4_Container>
+!include <C4/C4_Component>
+
+System(AcquiringProcessor, "Acquiring Processor", $descr="Acquirer or processor connected to card networks.", $tags="", $link="")
+
+System_Boundary("PaymentProcessingPlatform_boundary", "Payment Processing Platform", $tags="") {
+  Container_Boundary("PaymentProcessingPlatform.PaymentService_boundary", "Payment Service", $tags="") {
+    Component(PaymentProcessingPlatform.PaymentService.PaymentController, "Payment Controller", $techn="Spring REST Controller", $descr="Exposes internal payment lifecycle endpoints.", $tags="", $link="")
+    Component(PaymentProcessingPlatform.PaymentService.PaymentApplicationService, "Payment Application Service", $techn="Application Service", $descr="Coordinates payment commands and transaction boundaries.", $tags="", $link="")
+    Component(PaymentProcessingPlatform.PaymentService.AuthorizationProcessor, "Authorization Processor", $techn="Domain Service", $descr="Builds authorization requests and interprets acquirer responses.", $tags="", $link="")
+    Component(PaymentProcessingPlatform.PaymentService.CaptureProcessor, "Capture Processor", $techn="Domain Service", $descr="Executes payment capture.", $tags="", $link="")
+    Component(PaymentProcessingPlatform.PaymentService.RefundProcessor, "Refund Processor", $techn="Domain Service", $descr="Executes refunds and reversals.", $tags="", $link="")
+    Component(PaymentProcessingPlatform.PaymentService.PaymentRepository, "Payment Repository", $techn="Repository", $descr="Persists and queries payment aggregates.", $tags="", $link="")
+    Component(PaymentProcessingPlatform.PaymentService.OutboxPublisher, "Outbox Publisher", $techn="Worker", $descr="Publishes reliable domain events from the transactional outbox.", $tags="", $link="")
+    Component(PaymentProcessingPlatform.PaymentService.AcquirerClient, "Acquirer Client", $techn="HTTP / ISO8583 Client", $descr="Connects to acquiring processor.", $tags="", $link="")
+  }
+
+  Container(PaymentProcessingPlatform.PaymentJourneyService, "Payment Journey Service", $techn="Java / Spring Boot", $descr="Orchestrates merchant-facing payment journeys.", $tags="", $link="")
+  ContainerQueue(PaymentProcessingPlatform.EventBus, "Event Bus", $techn="Kafka / Pub/Sub", $descr="Publishes payment domain events.", $tags="", $link="")
+  ContainerDb(PaymentProcessingPlatform.PaymentDatabase, "Payment Database", $techn="PostgreSQL / AlloyDB", $descr="Stores payments, transactions and settlements.", $tags="", $link="")
+}
+
+Rel(PaymentProcessingPlatform.PaymentJourneyService, PaymentProcessingPlatform.PaymentService.PaymentController, "Calls", $techn="REST", $tags="", $link="")
+Rel(PaymentProcessingPlatform.PaymentService.PaymentController, PaymentProcessingPlatform.PaymentService.PaymentApplicationService, "Delegates commands", $techn="", $tags="", $link="")
+Rel(PaymentProcessingPlatform.PaymentService.PaymentApplicationService, PaymentProcessingPlatform.PaymentService.AuthorizationProcessor, "Authorizes payments", $techn="", $tags="", $link="")
+Rel(PaymentProcessingPlatform.PaymentService.PaymentApplicationService, PaymentProcessingPlatform.PaymentService.CaptureProcessor, "Captures payments", $techn="", $tags="", $link="")
+Rel(PaymentProcessingPlatform.PaymentService.PaymentApplicationService, PaymentProcessingPlatform.PaymentService.RefundProcessor, "Refunds payments", $techn="", $tags="", $link="")
+Rel(PaymentProcessingPlatform.PaymentService.PaymentApplicationService, PaymentProcessingPlatform.PaymentService.PaymentRepository, "Persists payment state", $techn="", $tags="", $link="")
+Rel(PaymentProcessingPlatform.PaymentService.PaymentApplicationService, PaymentProcessingPlatform.PaymentService.OutboxPublisher, "Stores outbox events", $techn="", $tags="", $link="")
+Rel(PaymentProcessingPlatform.PaymentService.AuthorizationProcessor, PaymentProcessingPlatform.PaymentService.AcquirerClient, "Sends authorization", $techn="", $tags="", $link="")
+Rel(PaymentProcessingPlatform.PaymentService.AcquirerClient, AcquiringProcessor, "Sends transaction requests", $techn="REST / ISO8583", $tags="", $link="")
+Rel(PaymentProcessingPlatform.PaymentService.PaymentRepository, PaymentProcessingPlatform.PaymentDatabase, "Reads/writes", $techn="SQL", $tags="", $link="")
+Rel(PaymentProcessingPlatform.PaymentService.OutboxPublisher, PaymentProcessingPlatform.EventBus, "Publishes payment events", $techn="Async", $tags="", $link="")
+
+SHOW_LEGEND(true)
+hide stereotypes
+@enduml

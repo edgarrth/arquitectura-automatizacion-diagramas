@@ -1,0 +1,64 @@
+@startuml
+title <size:24>Deployment View: Payment Processing Platform - Production</size>\n<size:24>Shows the production deployment on GCP.</size>
+
+set separator none
+left to right direction
+
+<style>
+  root {
+    BackgroundColor: #ffffff
+    FontColor: #444444
+  }
+</style>
+
+!include <C4/C4>
+!include <C4/C4_Context>
+!include <C4/C4_Container>
+!include <C4/C4_Deployment>
+
+Deployment_Node(Production.GoogleCloudPlatform, "Google Cloud Platform", $type="", $descr="GCP", $tags="", $link="") {
+  Deployment_Node(Production.GoogleCloudPlatform.EdgeLayer, "Edge Layer", $type="", $descr="Cloud Armor + Global Load Balancer + Apigee", $tags="", $link="") {
+    Container(Production.GoogleCloudPlatform.EdgeLayer.APIGateway_1, "API Gateway", $techn="Apigee / API Gateway", $descr="Exposes secure payment APIs, rate limits, authentication, quotas and observability.", $tags="", $link="")
+  }
+
+  Deployment_Node(Production.GoogleCloudPlatform.GKECluster, "GKE Cluster", $type="", $descr="Google Kubernetes Engine", $tags="", $link="") {
+    Deployment_Node(Production.GoogleCloudPlatform.GKECluster.paymentnamespace, "payment namespace", $type="", $descr="Kubernetes Namespace", $tags="", $link="") {
+      Container(Production.GoogleCloudPlatform.GKECluster.paymentnamespace.PaymentJourneyService_1, "Payment Journey Service", $techn="Java / Spring Boot", $descr="Orchestrates merchant-facing payment journeys.", $tags="", $link="")
+      Container(Production.GoogleCloudPlatform.GKECluster.paymentnamespace.PaymentService_1, "Payment Service", $techn="Java / Spring Boot", $descr="Owns payment lifecycle and transaction state.", $tags="", $link="")
+      Container(Production.GoogleCloudPlatform.GKECluster.paymentnamespace.FraudService_1, "Fraud Service", $techn="Java / Python", $descr="Evaluates risk and fraud rules.", $tags="", $link="")
+      Container(Production.GoogleCloudPlatform.GKECluster.paymentnamespace.TokenizationService_1, "Tokenization Service", $techn="Java / Spring Boot", $descr="Tokenizes card data and isolates PCI-sensitive operations.", $tags="", $link="")
+      Container(Production.GoogleCloudPlatform.GKECluster.paymentnamespace.SettlementService_1, "Settlement Service", $techn="Java / Spring Boot", $descr="Processes clearing, settlement and reconciliation.", $tags="", $link="")
+      Container(Production.GoogleCloudPlatform.GKECluster.paymentnamespace.NotificationService_1, "Notification Service", $techn="Java / Spring Boot", $descr="Sends payment notifications.", $tags="", $link="")
+    }
+
+  }
+
+  Deployment_Node(Production.GoogleCloudPlatform.DataServices, "Data Services", $type="", $descr="Managed Services", $tags="", $link="") {
+    ContainerDb(Production.GoogleCloudPlatform.DataServices.PaymentDatabase_1, "Payment Database", $techn="PostgreSQL / AlloyDB", $descr="Stores payments, transactions and settlements.", $tags="", $link="")
+    ContainerDb(Production.GoogleCloudPlatform.DataServices.TokenVault_1, "Token Vault", $techn="HSM-backed vault", $descr="Stores tokens and encrypted references.", $tags="", $link="")
+    ContainerQueue(Production.GoogleCloudPlatform.DataServices.EventBus_1, "Event Bus", $techn="Kafka / Pub/Sub", $descr="Publishes payment domain events.", $tags="", $link="")
+  }
+
+  Deployment_Node(Production.GoogleCloudPlatform.Observability, "Observability", $type="", $descr="Telemetry Stack", $tags="", $link="") {
+    Container(Production.GoogleCloudPlatform.Observability.ObservabilityPlatform_1, "Observability Platform", $techn="OpenTelemetry / Grafana / Dynatrace", $descr="Collects logs, metrics and traces.", $tags="", $link="")
+  }
+
+}
+
+Rel(Production.GoogleCloudPlatform.EdgeLayer.APIGateway_1, Production.GoogleCloudPlatform.GKECluster.paymentnamespace.PaymentJourneyService_1, "Routes payment requests", $techn="REST", $tags="", $link="")
+Rel(Production.GoogleCloudPlatform.GKECluster.paymentnamespace.PaymentJourneyService_1, Production.GoogleCloudPlatform.GKECluster.paymentnamespace.PaymentService_1, "Creates and authorizes payments", $techn="REST", $tags="", $link="")
+Rel(Production.GoogleCloudPlatform.GKECluster.paymentnamespace.PaymentJourneyService_1, Production.GoogleCloudPlatform.GKECluster.paymentnamespace.FraudService_1, "Requests fraud evaluation", $techn="REST", $tags="", $link="")
+Rel(Production.GoogleCloudPlatform.GKECluster.paymentnamespace.PaymentJourneyService_1, Production.GoogleCloudPlatform.GKECluster.paymentnamespace.TokenizationService_1, "Tokenizes card data", $techn="REST", $tags="", $link="")
+Rel(Production.GoogleCloudPlatform.GKECluster.paymentnamespace.PaymentService_1, Production.GoogleCloudPlatform.DataServices.PaymentDatabase_1, "Reads/writes payment state", $techn="SQL", $tags="", $link="")
+Rel(Production.GoogleCloudPlatform.GKECluster.paymentnamespace.SettlementService_1, Production.GoogleCloudPlatform.DataServices.PaymentDatabase_1, "Reads settlement data", $techn="SQL", $tags="", $link="")
+Rel(Production.GoogleCloudPlatform.GKECluster.paymentnamespace.TokenizationService_1, Production.GoogleCloudPlatform.DataServices.TokenVault_1, "Stores tokenized data", $techn="Encrypted protocol", $tags="", $link="")
+Rel(Production.GoogleCloudPlatform.GKECluster.paymentnamespace.PaymentService_1, Production.GoogleCloudPlatform.DataServices.EventBus_1, "Publishes payment events", $techn="Async", $tags="", $link="")
+Rel(Production.GoogleCloudPlatform.GKECluster.paymentnamespace.SettlementService_1, Production.GoogleCloudPlatform.DataServices.EventBus_1, "Consumes payment events", $techn="Async", $tags="", $link="")
+Rel(Production.GoogleCloudPlatform.GKECluster.paymentnamespace.NotificationService_1, Production.GoogleCloudPlatform.DataServices.EventBus_1, "Consumes payment events", $techn="Async", $tags="", $link="")
+Rel(Production.GoogleCloudPlatform.EdgeLayer.APIGateway_1, Production.GoogleCloudPlatform.Observability.ObservabilityPlatform_1, "Sends telemetry", $techn="", $tags="", $link="")
+Rel(Production.GoogleCloudPlatform.GKECluster.paymentnamespace.PaymentService_1, Production.GoogleCloudPlatform.Observability.ObservabilityPlatform_1, "Sends telemetry", $techn="", $tags="", $link="")
+Rel(Production.GoogleCloudPlatform.GKECluster.paymentnamespace.FraudService_1, Production.GoogleCloudPlatform.Observability.ObservabilityPlatform_1, "Sends telemetry", $techn="", $tags="", $link="")
+
+SHOW_LEGEND(true)
+hide stereotypes
+@enduml

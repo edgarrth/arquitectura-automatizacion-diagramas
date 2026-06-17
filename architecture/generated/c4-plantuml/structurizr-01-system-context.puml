@@ -1,0 +1,32 @@
+@startuml
+title <size:24>System Context View: Payment Processing Platform</size>\n<size:24>Shows Payment Processing Platform in the payment ecosystem.</size>
+
+set separator none
+left to right direction
+
+<style>
+  root {
+    BackgroundColor: #ffffff
+    FontColor: #444444
+  }
+</style>
+
+!include <C4/C4>
+!include <C4/C4_Context>
+
+Person(MerchantOperator, "Merchant Operator", $descr="Merchant user who monitors payments, refunds and settlements.", $tags="", $link="")
+System(MerchantPlatform, "Merchant Platform", $descr="E-commerce, mobile app, checkout or POS system.", $tags="", $link="")
+System(AcquiringProcessor, "Acquiring Processor", $descr="Acquirer or processor connected to card networks.", $tags="", $link="")
+System(ExternalFraudProvider, "External Fraud Provider", $descr="External risk scoring provider.", $tags="", $link="")
+System(NotificationProvider, "Notification Provider", $descr="Email, SMS or push provider.", $tags="", $link="")
+System(PaymentProcessingPlatform, "Payment Processing Platform", $descr="Processes authorization, capture, fraud evaluation, settlement and notifications.", $tags="", $link="")
+
+Rel(MerchantOperator, PaymentProcessingPlatform, "Monitors payments and settlements", $techn="HTTPS", $tags="", $link="")
+Rel(MerchantPlatform, PaymentProcessingPlatform, "Consumes payment APIs", $techn="HTTPS / REST", $tags="", $link="")
+Rel(PaymentProcessingPlatform, AcquiringProcessor, "Sends authorization, capture and refund requests", $techn="REST / ISO 8583", $tags="", $link="")
+Rel(PaymentProcessingPlatform, ExternalFraudProvider, "Requests external score", $techn="HTTPS", $tags="", $link="")
+Rel(PaymentProcessingPlatform, NotificationProvider, "Sends notifications", $techn="HTTPS", $tags="", $link="")
+
+SHOW_LEGEND(true)
+hide stereotypes
+@enduml

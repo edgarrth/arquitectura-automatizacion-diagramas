@@ -1,0 +1,52 @@
+@startuml
+title <size:24>Dynamic View: Payment Processing Platform</size>\n<size:24>Shows the authorization flow as a C4 dynamic view.</size>
+
+set separator none
+left to right direction
+
+<style>
+  root {
+    BackgroundColor: #ffffff
+    FontColor: #444444
+  }
+</style>
+
+!include <C4/C4>
+!include <C4/C4_Context>
+!include <C4/C4_Container>
+
+System_Boundary("PaymentProcessingPlatform_boundary", "Payment Processing Platform", $tags="") {
+  Container(PaymentProcessingPlatform.APIGateway, "API Gateway", $techn="Apigee / API Gateway", $descr="Exposes secure payment APIs, rate limits, authentication, quotas and observability.", $tags="", $link="")
+  Container(PaymentProcessingPlatform.PaymentJourneyService, "Payment Journey Service", $techn="Java / Spring Boot", $descr="Orchestrates merchant-facing payment journeys.", $tags="", $link="")
+  Container(PaymentProcessingPlatform.PaymentService, "Payment Service", $techn="Java / Spring Boot", $descr="Owns payment lifecycle and transaction state.", $tags="", $link="")
+  Container(PaymentProcessingPlatform.FraudService, "Fraud Service", $techn="Java / Python", $descr="Evaluates risk and fraud rules.", $tags="", $link="")
+  Container(PaymentProcessingPlatform.TokenizationService, "Tokenization Service", $techn="Java / Spring Boot", $descr="Tokenizes card data and isolates PCI-sensitive operations.", $tags="", $link="")
+  ContainerQueue(PaymentProcessingPlatform.EventBus, "Event Bus", $techn="Kafka / Pub/Sub", $descr="Publishes payment domain events.", $tags="", $link="")
+}
+
+Person(Customer, "Customer", $descr="Cardholder who pays with debit or credit card.", $tags="", $link="")
+System(MerchantPlatform, "Merchant Platform", $descr="E-commerce, mobile app, checkout or POS system.", $tags="", $link="")
+System(AcquiringProcessor, "Acquiring Processor", $descr="Acquirer or processor connected to card networks.", $tags="", $link="")
+System(CardNetwork, "Card Network", $descr="Visa, Mastercard or another payment network.", $tags="", $link="")
+System(IssuingBank, "Issuing Bank", $descr="Bank that issued the customer card.", $tags="", $link="")
+
+Rel(Customer, MerchantPlatform, "1: Pays with card", $techn="HTTPS / POS", $tags="", $link="")
+Rel(MerchantPlatform, PaymentProcessingPlatform.APIGateway, "2: POST /payments/v1/authorizations", $techn="HTTPS / REST", $tags="", $link="")
+Rel(PaymentProcessingPlatform.APIGateway, PaymentProcessingPlatform.PaymentJourneyService, "3: Route and authenticate request", $techn="REST", $tags="", $link="")
+Rel(PaymentProcessingPlatform.PaymentJourneyService, PaymentProcessingPlatform.TokenizationService, "4: Tokenize card data", $techn="REST", $tags="", $link="")
+Rel(PaymentProcessingPlatform.PaymentJourneyService, PaymentProcessingPlatform.FraudService, "5: Evaluate fraud risk", $techn="REST", $tags="", $link="")
+Rel(PaymentProcessingPlatform.PaymentJourneyService, PaymentProcessingPlatform.PaymentService, "6: Authorize payment", $techn="REST", $tags="", $link="")
+Rel(PaymentProcessingPlatform.PaymentService, AcquiringProcessor, "7: Send authorization request", $techn="REST / ISO 8583", $tags="", $link="")
+Rel(AcquiringProcessor, CardNetwork, "8: Route transaction", $techn="", $tags="", $link="")
+Rel(CardNetwork, IssuingBank, "9: Request issuer approval", $techn="", $tags="", $link="")
+Rel(IssuingBank, CardNetwork, "10: Approve or decline", $techn="", $tags="", $link="")
+Rel(CardNetwork, AcquiringProcessor, "11: Return network response", $techn="", $tags="", $link="")
+Rel(AcquiringProcessor, PaymentProcessingPlatform.PaymentService, "12: Return authorization result", $techn="REST / ISO 8583", $tags="", $link="")
+Rel(PaymentProcessingPlatform.PaymentService, PaymentProcessingPlatform.EventBus, "13: Publish PaymentAuthorized or PaymentDeclined", $techn="Async", $tags="", $link="")
+Rel(PaymentProcessingPlatform.PaymentService, PaymentProcessingPlatform.PaymentJourneyService, "14: Return authorization result", $techn="REST", $tags="", $link="")
+Rel(PaymentProcessingPlatform.PaymentJourneyService, PaymentProcessingPlatform.APIGateway, "15: Return payment result", $techn="REST", $tags="", $link="")
+Rel(PaymentProcessingPlatform.APIGateway, MerchantPlatform, "16: 201 Created / 402 Declined", $techn="HTTPS / REST", $tags="", $link="")
+
+SHOW_LEGEND(true)
+hide stereotypes
+@enduml

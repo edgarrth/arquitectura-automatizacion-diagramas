@@ -1,0 +1,61 @@
+@startuml
+title <size:24>Container View: Payment Processing Platform</size>\n<size:24>Shows the main services, databases and infrastructure inside the platform.</size>
+
+set separator none
+left to right direction
+
+<style>
+  root {
+    BackgroundColor: #ffffff
+    FontColor: #444444
+  }
+</style>
+
+!include <C4/C4>
+!include <C4/C4_Context>
+!include <C4/C4_Container>
+
+Person(MerchantOperator, "Merchant Operator", $descr="Merchant user who monitors payments, refunds and settlements.", $tags="", $link="")
+System(MerchantPlatform, "Merchant Platform", $descr="E-commerce, mobile app, checkout or POS system.", $tags="", $link="")
+System(AcquiringProcessor, "Acquiring Processor", $descr="Acquirer or processor connected to card networks.", $tags="", $link="")
+System(ExternalFraudProvider, "External Fraud Provider", $descr="External risk scoring provider.", $tags="", $link="")
+System(NotificationProvider, "Notification Provider", $descr="Email, SMS or push provider.", $tags="", $link="")
+
+System_Boundary("PaymentProcessingPlatform_boundary", "Payment Processing Platform", $tags="") {
+  Container(PaymentProcessingPlatform.APIGateway, "API Gateway", $techn="Apigee / API Gateway", $descr="Exposes secure payment APIs, rate limits, authentication, quotas and observability.", $tags="", $link="")
+  Container(PaymentProcessingPlatform.PaymentJourneyService, "Payment Journey Service", $techn="Java / Spring Boot", $descr="Orchestrates merchant-facing payment journeys.", $tags="", $link="")
+  Container(PaymentProcessingPlatform.PaymentService, "Payment Service", $techn="Java / Spring Boot", $descr="Owns payment lifecycle and transaction state.", $tags="", $link="")
+  Container(PaymentProcessingPlatform.FraudService, "Fraud Service", $techn="Java / Python", $descr="Evaluates risk and fraud rules.", $tags="", $link="")
+  Container(PaymentProcessingPlatform.TokenizationService, "Tokenization Service", $techn="Java / Spring Boot", $descr="Tokenizes card data and isolates PCI-sensitive operations.", $tags="", $link="")
+  Container(PaymentProcessingPlatform.SettlementService, "Settlement Service", $techn="Java / Spring Boot", $descr="Processes clearing, settlement and reconciliation.", $tags="", $link="")
+  Container(PaymentProcessingPlatform.NotificationService, "Notification Service", $techn="Java / Spring Boot", $descr="Sends payment notifications.", $tags="", $link="")
+  Container(PaymentProcessingPlatform.MerchantBackoffice, "Merchant Backoffice", $techn="React", $descr="Allows merchants to search payments, refunds and settlements.", $tags="", $link="")
+  ContainerQueue(PaymentProcessingPlatform.EventBus, "Event Bus", $techn="Kafka / Pub/Sub", $descr="Publishes payment domain events.", $tags="", $link="")
+  ContainerDb(PaymentProcessingPlatform.PaymentDatabase, "Payment Database", $techn="PostgreSQL / AlloyDB", $descr="Stores payments, transactions and settlements.", $tags="", $link="")
+  ContainerDb(PaymentProcessingPlatform.TokenVault, "Token Vault", $techn="HSM-backed vault", $descr="Stores tokens and encrypted references.", $tags="", $link="")
+  Container(PaymentProcessingPlatform.ObservabilityPlatform, "Observability Platform", $techn="OpenTelemetry / Grafana / Dynatrace", $descr="Collects logs, metrics and traces.", $tags="", $link="")
+}
+
+Rel(MerchantPlatform, PaymentProcessingPlatform.APIGateway, "Consumes payment APIs", $techn="HTTPS / REST", $tags="", $link="")
+Rel(PaymentProcessingPlatform.APIGateway, PaymentProcessingPlatform.PaymentJourneyService, "Routes payment requests", $techn="REST", $tags="", $link="")
+Rel(PaymentProcessingPlatform.PaymentJourneyService, PaymentProcessingPlatform.PaymentService, "Creates and authorizes payments", $techn="REST", $tags="", $link="")
+Rel(PaymentProcessingPlatform.PaymentJourneyService, PaymentProcessingPlatform.FraudService, "Requests fraud evaluation", $techn="REST", $tags="", $link="")
+Rel(PaymentProcessingPlatform.PaymentJourneyService, PaymentProcessingPlatform.TokenizationService, "Tokenizes card data", $techn="REST", $tags="", $link="")
+Rel(PaymentProcessingPlatform.PaymentService, PaymentProcessingPlatform.PaymentDatabase, "Reads/writes payment state", $techn="SQL", $tags="", $link="")
+Rel(PaymentProcessingPlatform.PaymentService, PaymentProcessingPlatform.EventBus, "Publishes payment events", $techn="Async", $tags="", $link="")
+Rel(PaymentProcessingPlatform.PaymentService, AcquiringProcessor, "Sends authorization, capture and refund requests", $techn="REST / ISO 8583", $tags="", $link="")
+Rel(PaymentProcessingPlatform.FraudService, ExternalFraudProvider, "Requests external score", $techn="HTTPS", $tags="", $link="")
+Rel(PaymentProcessingPlatform.TokenizationService, PaymentProcessingPlatform.TokenVault, "Stores tokenized data", $techn="Encrypted protocol", $tags="", $link="")
+Rel(PaymentProcessingPlatform.SettlementService, PaymentProcessingPlatform.EventBus, "Consumes payment events", $techn="Async", $tags="", $link="")
+Rel(PaymentProcessingPlatform.SettlementService, PaymentProcessingPlatform.PaymentDatabase, "Reads settlement data", $techn="SQL", $tags="", $link="")
+Rel(PaymentProcessingPlatform.NotificationService, PaymentProcessingPlatform.EventBus, "Consumes payment events", $techn="Async", $tags="", $link="")
+Rel(PaymentProcessingPlatform.NotificationService, NotificationProvider, "Sends notifications", $techn="HTTPS", $tags="", $link="")
+Rel(PaymentProcessingPlatform.MerchantBackoffice, PaymentProcessingPlatform.APIGateway, "Consumes internal APIs", $techn="HTTPS", $tags="", $link="")
+Rel(MerchantOperator, PaymentProcessingPlatform.MerchantBackoffice, "Uses", $techn="HTTPS", $tags="", $link="")
+Rel(PaymentProcessingPlatform.APIGateway, PaymentProcessingPlatform.ObservabilityPlatform, "Sends telemetry", $techn="", $tags="", $link="")
+Rel(PaymentProcessingPlatform.PaymentService, PaymentProcessingPlatform.ObservabilityPlatform, "Sends telemetry", $techn="", $tags="", $link="")
+Rel(PaymentProcessingPlatform.FraudService, PaymentProcessingPlatform.ObservabilityPlatform, "Sends telemetry", $techn="", $tags="", $link="")
+
+SHOW_LEGEND(true)
+hide stereotypes
+@enduml
