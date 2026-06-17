@@ -14,4 +14,4 @@ architecture/generated/c4-plantuml/05-deployment-view.puml
 
 SVG generado:
 
-![C4 - Deployment View](../../assets/diagrams/svg/05-deployment-view.svg)
+![Deployment View](../../assets/diagrams/svg/structurizr-05-deployment-view.svg)
