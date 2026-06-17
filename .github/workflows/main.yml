@@ -1,4 +1,4 @@
-name: Debug Structurizr Export
+name: Generate C4-PlantUML and Publish Docs
 
 on:
   push:
@@ -8,43 +8,87 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 jobs:
-  debug:
+  generate-c4:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Show repository files
-        run: |
-          pwd
-          find . -maxdepth 4 -type f | sort
-
       - name: Validate Structurizr DSL
         run: |
           docker run --rm \
             -v ${{ github.workspace }}:/usr/local/structurizr \
-            structurizr/cli:latest validate \
-            -workspace architecture/workspace.dsl
+            structurizr/cli:latest \
+            validate -workspace architecture/workspace.dsl
 
-      - name: Export C4-PlantUML
+      - name: Generate C4-PlantUML from Structurizr DSL
         run: |
           rm -rf architecture/generated/c4-plantuml
           mkdir -p architecture/generated/c4-plantuml
 
           docker run --rm \
             -v ${{ github.workspace }}:/usr/local/structurizr \
-            structurizr/cli:latest export \
+            structurizr/cli:latest \
+            export \
             -workspace architecture/workspace.dsl \
-            -format plantuml/c4plantuml \
+            -format c4plantuml \
             -output architecture/generated/c4-plantuml
 
-      - name: Show export result
+      - name: Show generated C4-PlantUML files
         run: |
-          echo "Files after export:"
-          find . -type f | sort
+          echo "Generated files:"
+          find architecture/generated/c4-plantuml -type f -print
 
-          echo "Generated directory:"
-          ls -la architecture/generated/c4-plantuml || true
+          test -n "$(find architecture/generated/c4-plantuml -type f -print -quit)"
+
+      - name: Render C4-PlantUML to SVG
+        run: |
+          mkdir -p docs/assets/diagrams/svg
+
+          docker run --rm \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace \
+            plantuml/plantuml:latest \
+            sh -c "find architecture/generated/c4-plantuml -type f -name '*.puml' -exec plantuml -tsvg -o /workspace/docs/assets/diagrams/svg {} +"
+
+      - name: Commit generated diagrams
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Generate C4-PlantUML diagrams from Structurizr"
+          file_pattern: architecture/generated/c4-plantuml/* docs/assets/diagrams/svg/*.svg
+
+  publish-docs:
+    needs: generate-c4
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout updated repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install MkDocs
+        run: |
+          pip install mkdocs-material pymdown-extensions
+
+      - name: Build MkDocs site
+        run: |
+          mkdocs build
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
