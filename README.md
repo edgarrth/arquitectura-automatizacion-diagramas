@@ -1,4 +1,4 @@
-# Payment Processing Architecture
+# Diagramas de arquitectura con automatizacion
 
 Repositorio de arquitectura documentando con **Structurizr DSL**, **C4-PlantUML**, **Mermaid**, **MkDocs Material** y **GitHub Pages**.
 
