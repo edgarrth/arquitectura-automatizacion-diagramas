@@ -55,12 +55,17 @@ jobs:
         run: |
           mkdir -p docs/assets/diagrams/svg
 
+          echo "PlantUML files to render:"
+          find architecture/generated/c4-plantuml -type f -print
+
           docker run --rm \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace \
             plantuml/plantuml:latest \
-            sh -c "find architecture/generated/c4-plantuml -type f -name '*.puml' -exec plantuml -tsvg -o /workspace/docs/assets/diagrams/svg {} +"
-
+            -tsvg \
+            -o docs/assets/diagrams/svg \
+            $(find architecture/generated/c4-plantuml -type f -name "*.puml" -print)
+            
       - name: Commit generated diagrams
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
