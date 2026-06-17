@@ -1,51 +1,121 @@
 # Payment Processing Architecture
 
-Repositorio profesional de arquitectura para **Payment Processing**.
+Repositorio profesional de arquitectura para un caso de uso de **Payment Processing**, documentado con **Structurizr DSL**, **C4-PlantUML**, **Mermaid**, **MkDocs Material** y **GitHub Pages**.
 
-## Principio principal
+El objetivo del repositorio es mantener un modelo de arquitectura como fuente única de verdad y generar automáticamente los diagramas para publicarlos como documentación navegable.
 
-La fuente de verdad es:
+---
+
+## 1. Arquitectura de generación
+
+La fuente principal del modelo es:
 
 ```text
 architecture/workspace.dsl
 ```
 
-Desde ese modelo, GitHub Actions genera automáticamente:
+Desde ese archivo se generan automáticamente:
 
 ```text
 architecture/generated/c4-plantuml/*.puml
 docs/assets/diagrams/svg/*.svg
 ```
 
-Los diagramas C4 finales se generan usando **C4-PlantUML**, es decir, con estereotipos/macros C4 como:
-
-- `Person`
-- `System`
-- `System_Ext`
-- `Container`
-- `ContainerDb`
-- `ContainerQueue`
-- `Component`
-- `Deployment_Node`
-- `Rel`
-
-## Flujo de generación
+El flujo completo es:
 
 ```text
 Structurizr DSL
       ↓
-structurizr/cli export -format plantuml/c4plantuml
+Structurizr CLI
       ↓
-C4-PlantUML .puml
+C4-PlantUML
       ↓
-PlantUML render
+PlantUML
       ↓
 SVG
       ↓
-MkDocs / GitHub Pages
+MkDocs Material
+      ↓
+GitHub Pages
 ```
 
-## Documentación
+Los diagramas C4 finales se generan con **C4-PlantUML**, usando macros como:
+
+```text
+Person
+System
+System_Ext
+Container
+ContainerDb
+ContainerQueue
+Component
+Deployment_Node
+Rel
+```
+
+Los diagramas auxiliares que no requieren C4, como secuencias, eventos o flujos PCI, están en **Mermaid**.
+
+---
+
+## 2. Estructura del repositorio
+
+```text
+.
+├── .github/
+│   └── workflows/
+│       └── main.yml
+│
+├── architecture/
+│   ├── workspace.dsl
+│   └── generated/
+│       └── c4-plantuml/
+│
+├── docs/
+│   ├── index.md
+│   ├── adr/
+│   ├── architecture/
+│   │   ├── c4/
+│   │   ├── events/
+│   │   ├── infrastructure/
+│   │   ├── security/
+│   │   └── uml/
+│   └── assets/
+│       └── diagrams/
+│           └── svg/
+│
+├── scripts/
+│   ├── generate-c4-plantuml.sh
+│   ├── render-c4-svg.sh
+│   └── serve-docs.sh
+│
+├── mkdocs.yml
+└── README.md
+```
+
+---
+
+## 3. Explicación de carpetas
+
+| Carpeta / archivo | Descripción |
+|---|---|
+| `.github/workflows/main.yml` | Workflow principal de GitHub Actions. Valida el DSL, genera C4-PlantUML, renderiza SVG, commitea diagramas generados y publica GitHub Pages. |
+| `architecture/workspace.dsl` | Fuente de verdad del modelo C4 en Structurizr DSL. Aquí se definen personas, sistemas, contenedores, componentes, relaciones, vistas dinámicas y deployment. |
+| `architecture/generated/c4-plantuml/` | Carpeta generada automáticamente. Contiene los `.puml` exportados desde Structurizr en formato C4-PlantUML. |
+| `docs/index.md` | Página inicial del portal MkDocs. |
+| `docs/architecture/c4/` | Páginas Markdown que muestran los diagramas C4 renderizados como SVG. |
+| `docs/architecture/uml/` | Diagramas UML auxiliares en Mermaid, por ejemplo secuencias. |
+| `docs/architecture/events/` | Diagramas de eventos del dominio de pagos. |
+| `docs/architecture/security/` | Diagramas de seguridad, incluyendo PCI DSS Data Flow. |
+| `docs/architecture/infrastructure/` | Diagramas de infraestructura y topología cloud. |
+| `docs/assets/diagrams/svg/` | Carpeta generada automáticamente con los SVG finales. Estos son los diagramas que visualiza MkDocs/GitHub Pages. |
+| `docs/adr/` | Architecture Decision Records. Documenta decisiones técnicas y arquitectónicas. |
+| `scripts/` | Scripts para ejecutar la generación y publicación localmente. |
+| `mkdocs.yml` | Configuración del sitio MkDocs Material: navegación, tema, extensiones y estructura del portal. |
+| `README.md` | Guía principal del repositorio. |
+
+---
+
+## 4. Diagramas disponibles
 
 | Vista | Documento |
 |---|---|
@@ -54,143 +124,371 @@ MkDocs / GitHub Pages
 | Component View | [docs/architecture/c4/component-payment-service.md](docs/architecture/c4/component-payment-service.md) |
 | Dynamic View | [docs/architecture/c4/dynamic-payment-authorization.md](docs/architecture/c4/dynamic-payment-authorization.md) |
 | Deployment View | [docs/architecture/c4/deployment-view.md](docs/architecture/c4/deployment-view.md) |
-| UML Sequence | [docs/architecture/uml/payment-authorization-sequence.md](docs/architecture/uml/payment-authorization-sequence.md) |
-| Event Flow | [docs/architecture/events/payment-event-flow.md](docs/architecture/events/payment-event-flow.md) |
-| PCI Data Flow | [docs/architecture/security/pci-data-flow.md](docs/architecture/security/pci-data-flow.md) |
+| Payment Authorization Sequence | [docs/architecture/uml/payment-authorization-sequence.md](docs/architecture/uml/payment-authorization-sequence.md) |
+| Payment Event Flow | [docs/architecture/events/payment-event-flow.md](docs/architecture/events/payment-event-flow.md) |
+| PCI DSS Data Flow | [docs/architecture/security/pci-data-flow.md](docs/architecture/security/pci-data-flow.md) |
+| GCP Infrastructure Topology | [docs/architecture/infrastructure/gcp-topology.md](docs/architecture/infrastructure/gcp-topology.md) |
+| ADRs | [docs/adr/index.md](docs/adr/index.md) |
 
-## Ejecución local
+---
 
-```bash
-./scripts/generate-c4-plantuml.sh
-./scripts/render-c4-svg.sh
-./scripts/serve-docs.sh
+## 5. Cómo ejecutarlo en GitHub Actions
+
+### 5.1. Habilitar GitHub Pages
+
+En el repositorio de GitHub:
+
+```text
+Settings
+  → Pages
+      → Build and deployment
+          → Source = GitHub Actions
 ```
 
-# Ejecucion
-##Opción 1: Localmente (recomendado)
-1. Instalar Docker
-2. Generar los archivos C4-PlantUML
+Esto permite que el workflow publique el sitio generado por MkDocs.
 
-Desde la raíz del repositorio:
+---
+
+### 5.2. Ejecutar automáticamente
+
+El workflow se ejecuta automáticamente cuando haces push a `main`:
+
 ```bash
-./scripts/generate-c4-plantuml.sh
+git add .
+git commit -m "Update architecture"
+git push origin main
 ```
-o:
-```bash
-bash scripts/generate-c4-plantuml.sh
+
+El pipeline hará lo siguiente:
+
+```text
+1. Checkout del repositorio
+2. Setup Java
+3. Descarga/cache de Structurizr CLI
+4. Validación de architecture/workspace.dsl
+5. Exportación a C4-PlantUML
+6. Renderizado de C4-PlantUML a SVG
+7. Commit de los archivos generados
+8. Build del sitio MkDocs
+9. Deploy a GitHub Pages
 ```
 
-Esto ejecuta:
+---
 
-```bash
-docker run --rm \
-  -v $(pwd):/usr/local/structurizr \
-  structurizr/cli export \
-  -workspace architecture/workspace.dsl \
-  -format plantuml/c4plantuml \
-  -output architecture/generated/c4-plantuml
-```bash
+### 5.3. Ejecutar manualmente
 
-Generará:
+También puedes ejecutarlo manualmente:
+
+```text
+Actions
+  → Generate C4-PlantUML and Publish Docs
+      → Run workflow
+```
+
+Esto es útil cuando quieres regenerar documentación sin hacer cambios en el código.
+
+---
+
+## 6. Dónde ver los resultados en GitHub
+
+### 6.1. Archivos C4-PlantUML generados
+
+Después de correr el workflow, los `.puml` quedan en:
 
 ```text
 architecture/generated/c4-plantuml/
-
-├── 01-system-context.puml
-├── 02-container-view.puml
-├── 03-component-payment-service.puml
-├── 04-dynamic-payment-authorization.puml
-└── 05-deployment-view.puml
 ```
 
-Aquí ya puedes abrir los .puml y ver que contienen:
+Ejemplos:
 
-```bash
-Person(...)
-System(...)
-System_Ext(...)
-
-Container(...)
-ContainerDb(...)
-
-Component(...)
-
-Deployment_Node(...)
-
-```bash
-
-3. Generar SVG
-
-Ejecuta:
-```bash
-./scripts/render-c4-svg.sh
+```text
+structurizr-01-system-context.puml
+structurizr-02-container-view.puml
+structurizr-03-component-payment-service.puml
+structurizr-04-dynamic-payment-authorization.puml
+structurizr-05-deployment-view.puml
 ```
 
-Esto renderiza todos los .puml.
+Estos archivos permiten verificar que los diagramas C4 fueron generados como **C4-PlantUML**.
 
-Resultado:
+---
+
+### 6.2. SVG generados
+
+Los diagramas renderizados quedan en:
 
 ```text
 docs/assets/diagrams/svg/
 ```
+
+Ejemplos:
+
 ```text
-├── 01-system-context.svg
-├── 02-container-view.svg
-├── 03-component-payment-service.svg
-├── 04-dynamic-payment-authorization.svg
-└── 05-deployment-view.svg
+structurizr-01-system-context.svg
+structurizr-02-container-view.svg
+structurizr-03-component-payment-service.svg
+structurizr-04-dynamic-payment-authorization.svg
+structurizr-05-deployment-view.svg
 ```
 
-### Linux
+Estos SVG son los que se muestran dentro del portal MkDocs.
 
-start docs\assets\diagrams\svg\01-system-context.svg
+---
 
-### Windows
+### 6.3. Portal GitHub Pages
 
-Ver la documentación completa
+Cuando GitHub Pages queda publicado, la URL tendrá este formato:
 
-Instala MkDocs:
+```text
+https://<usuario-o-organizacion>.github.io/<nombre-del-repositorio>/
+```
+
+Ejemplo:
+
+```text
+https://edgarrth.github.io/arquitectura-diagramas/
+```
+
+Desde ahí puedes navegar:
+
+```text
+C4
+ ├── System Context
+ ├── Container View
+ ├── Component View
+ ├── Dynamic View
+ └── Deployment View
+
+UML
+ └── Payment Authorization Sequence
+
+Events
+ └── Payment Event Flow
+
+Security
+ └── PCI DSS Data Flow
+
+Infrastructure
+ └── GCP Topology
+
+ADR
+ ├── ADR-001
+ ├── ADR-002
+ └── ADR-003
+```
+
+---
+
+## 7. Cómo ejecutarlo localmente
+
+### 7.1. Requisitos
+
+Necesitas:
+
+```text
+Docker
+Java 21
+Python 3.10+
+pip
+```
+
+Valida:
 
 ```bash
-pip install mkdocs-material pymdown-extensions
+docker --version
+java -version
+python --version
+pip --version
+```
+
+---
+
+### 7.2. Generar C4-PlantUML desde Structurizr
+
+```bash
+./scripts/generate-c4-plantuml.sh
+```
+
+Resultado esperado:
+
+```text
+architecture/generated/c4-plantuml/
+```
+
+---
+
+### 7.3. Renderizar SVG desde C4-PlantUML
+
+```bash
+./scripts/render-c4-svg.sh
+```
+
+Resultado esperado:
+
+```text
+docs/assets/diagrams/svg/
+```
+
+---
+
+### 7.4. Levantar la documentación local
+
+```bash
+./scripts/serve-docs.sh
+```
+
+Luego abre:
+
+```text
+http://127.0.0.1:8000
+```
+
+---
+
+## 8. Flujo normal de trabajo
+
+### Modificar la arquitectura
+
+Edita:
+
+```text
+architecture/workspace.dsl
 ```
 
 Luego:
 
 ```bash
-mkdocs serve
+git add architecture/workspace.dsl
+git commit -m "Update payment architecture model"
+git push origin main
 ```
 
-Abre:
+GitHub Actions generará nuevamente los `.puml`, los `.svg` y publicará la documentación.
+
+---
+
+### Modificar una página de documentación
+
+Edita cualquier archivo dentro de:
+
 ```text
-http://127.0.0.1:8000
+docs/
 ```
 
-y tendrás un portal navegable.
+Luego:
 
-## Opción 2: GitHub Actions
-
-Al hacer commit:
-
-```text
-Structurizr DSL
-      ↓
-Export C4-PlantUML
-      ↓
-Render SVG
-      ↓
-Commit SVG
-      ↓
-Deploy GitHub Pages
+```bash
+git add docs/
+git commit -m "Update architecture documentation"
+git push origin main
 ```
 
-valida:
-```text
-architecture/generated/c4-plantuml/01-system-context.puml
-```
+MkDocs publicará la nueva versión del sitio.
 
-Visualizar diagramas:
+---
+
+## 9. Cómo validar que los diagramas C4 son reales
+
+Abre cualquier archivo generado en:
+
 ```text
 architecture/generated/c4-plantuml/
+```
+
+Deberías ver macros C4-PlantUML como:
+
+```plantuml
+Person(...)
+System(...)
+System_Ext(...)
+Container(...)
+Component(...)
+Rel(...)
+```
+
+Eso confirma que los diagramas C4 no son simples Mermaid ni dibujos manuales, sino vistas exportadas desde Structurizr y generadas como C4-PlantUML.
+
+---
+
+## 10. Troubleshooting
+
+### GitHub Pages no publica
+
+Verifica:
+
+```text
+Settings → Pages → Source = GitHub Actions
+```
+
+---
+
+### Los diagramas no aparecen en MkDocs
+
+Verifica que existan los SVG:
+
+```text
 docs/assets/diagrams/svg/
 ```
+
+y que los Markdown de C4 apunten a los nombres correctos:
+
+```markdown
+![System Context](../../assets/diagrams/svg/structurizr-01-system-context.svg)
+```
+
+---
+
+### Structurizr DSL falla
+
+Ejecuta validación local:
+
+```bash
+./structurizr-cli/structurizr.sh validate -workspace architecture/workspace.dsl
+```
+
+o revisa el step:
+
+```text
+Validate Structurizr DSL
+```
+
+en GitHub Actions.
+
+---
+
+### PlantUML no genera SVG
+
+Revisa el step:
+
+```text
+Render C4-PlantUML to SVG
+```
+
+y valida que existan archivos `.puml` en:
+
+```text
+architecture/generated/c4-plantuml/
+```
+
+---
+
+## 11. Recomendación de gobierno
+
+Para un repositorio de arquitectura enterprise, se recomienda proteger la rama `main`:
+
+```text
+Settings
+  → Branches
+      → Add branch protection rule
+```
+
+Configuraciones sugeridas:
+
+```text
+Require pull request before merging
+Require status checks to pass before merging
+Do not allow force pushes
+Do not allow deletions
+```
+
+Con esto, el flujo queda controlado por Pull Requests y validación automática de arquitectura.
