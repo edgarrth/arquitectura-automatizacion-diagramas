@@ -30,12 +30,26 @@ jobs:
             -format plantuml/c4plantuml \
             -output architecture/generated/c4-plantuml
 
-      - name: Validate generated C4-PlantUML files
+      - name: Show generated files
         run: |
           echo "Generated files:"
-          find architecture/generated/c4-plantuml -type f -print
+          find architecture/generated/c4-plantuml -type f -print || true
 
-          test -n "$(find architecture/generated/c4-plantuml -name '*.puml' -print -quit)"
+      - name: Normalize PlantUML extensions
+        run: |
+          find architecture/generated/c4-plantuml -type f \( -name "*.plantuml" -o -name "*.puml" \) -print
+
+          count=$(find architecture/generated/c4-plantuml -type f \( -name "*.plantuml" -o -name "*.puml" \) | wc -l)
+
+          if [ "$count" -eq 0 ]; then
+            echo "No PlantUML files were generated."
+            exit 1
+          fi
+
+          for file in architecture/generated/c4-plantuml/*.plantuml; do
+            [ -e "$file" ] || continue
+            mv "$file" "${file%.plantuml}.puml"
+          done
 
       - name: Render C4-PlantUML to SVG
         run: |
@@ -58,7 +72,7 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "Generate C4-PlantUML diagrams from Structurizr"
-          file_pattern: architecture/generated/c4-plantuml/*.puml docs/assets/diagrams/svg/*.svg
+          file_pattern: architecture/generated/c4-plantuml/* docs/assets/diagrams/svg/*.svg
 
   publish-docs:
     needs: generate-c4
