@@ -65,7 +65,12 @@ jobs:
             -tsvg \
             -o docs/assets/diagrams/svg \
             $(find architecture/generated/c4-plantuml -type f -name "*.puml" -print)
-            
+
+      - name: Show SVG files
+        run: |
+          echo "SVG files:"
+          find docs -type f -name "*.svg" -print
+          
       - name: Commit generated diagrams
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
