@@ -1,6 +1,6 @@
 # Payment Processing Architecture
 
-Repositorio profesional de arquitectura para un caso de uso de **Payment Processing**, documentado con **Structurizr DSL**, **C4-PlantUML**, **Mermaid**, **MkDocs Material** y **GitHub Pages**.
+Repositorio de arquitectura documentando con **Structurizr DSL**, **C4-PlantUML**, **Mermaid**, **MkDocs Material** y **GitHub Pages**.
 
 El objetivo del repositorio es mantener un modelo de arquitectura como fuente única de verdad y generar automáticamente los diagramas para publicarlos como documentación navegable.
 
@@ -39,7 +39,7 @@ MkDocs Material
 GitHub Pages
 ```
 
-Los diagramas C4 finales se generan con **C4-PlantUML**, usando macros como:
+Los diagramas C4 finales se generan con **C4-PlantUML**, usando estereotipos como:
 
 ```text
 Person
@@ -94,7 +94,7 @@ Los diagramas auxiliares que no requieren C4, como secuencias, eventos o flujos 
 
 ---
 
-## 3. Explicación de carpetas
+## 3. Carpetas del proyecto
 
 | Carpeta / archivo | Descripción |
 |---|---|
@@ -405,90 +405,3 @@ Container(...)
 Component(...)
 Rel(...)
 ```
-
-Eso confirma que los diagramas C4 no son simples Mermaid ni dibujos manuales, sino vistas exportadas desde Structurizr y generadas como C4-PlantUML.
-
----
-
-## 10. Troubleshooting
-
-### GitHub Pages no publica
-
-Verifica:
-
-```text
-Settings → Pages → Source = GitHub Actions
-```
-
----
-
-### Los diagramas no aparecen en MkDocs
-
-Verifica que existan los SVG:
-
-```text
-docs/assets/diagrams/svg/
-```
-
-y que los Markdown de C4 apunten a los nombres correctos:
-
-```markdown
-![System Context](../../assets/diagrams/svg/structurizr-01-system-context.svg)
-```
-
----
-
-### Structurizr DSL falla
-
-Ejecuta validación local:
-
-```bash
-./structurizr-cli/structurizr.sh validate -workspace architecture/workspace.dsl
-```
-
-o revisa el step:
-
-```text
-Validate Structurizr DSL
-```
-
-en GitHub Actions.
-
----
-
-### PlantUML no genera SVG
-
-Revisa el step:
-
-```text
-Render C4-PlantUML to SVG
-```
-
-y valida que existan archivos `.puml` en:
-
-```text
-architecture/generated/c4-plantuml/
-```
-
----
-
-## 11. Recomendación de gobierno
-
-Para un repositorio de arquitectura enterprise, se recomienda proteger la rama `main`:
-
-```text
-Settings
-  → Branches
-      → Add branch protection rule
-```
-
-Configuraciones sugeridas:
-
-```text
-Require pull request before merging
-Require status checks to pass before merging
-Do not allow force pushes
-Do not allow deletions
-```
-
-Con esto, el flujo queda controlado por Pull Requests y validación automática de arquitectura.
